@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="SIMPATIH — Sistem Informasi Manajemen Pemerintahan Kelurahan Kepatihan, Kecamatan Ponorogo, Kabupaten Ponorogo">
+  <meta name="theme-color" content="#0c1f3f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="SIMPATIH">
+  <title>SIMPATIH — Kelurahan Kepatihan</title>
+
+  <link rel="icon" href="assets/icon-32.png" sizes="32x32" type="image/png">
+  <link rel="icon" href="assets/icon-192.png" sizes="192x192" type="image/png">
+  <link rel="apple-touch-icon" href="assets/icon-192.png">
+  <link rel="shortcut icon" href="assets/icon-32.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Lora:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+        integrity="sha512-Avb2QiuDEEvB4bZJYdft2mNjVShBftLdPG8FJ0V7irTLQ8Uo0qcPxh4Plq7G5tGm0rU+1SPhVotteLpBERwTkw=="
+        crossorigin="anonymous" referrerpolicy="no-referrer">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+        crossorigin="anonymous">
+
+  <link rel="stylesheet" href="css/style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"
+          integrity="sha256-DiMmxoaAcr7BWSdgxnKQQ8ruopYKK0bO5qIZKqxqv/A="
+          crossorigin="anonymous"></script>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div id="lov" role="status" aria-live="polite" aria-label="Memuat data">
+  <div class="lov-inner">
+    <div class="lov-ring">
+      <div class="lov-ring-outer"></div>
+      <div class="lov-ring-inner"></div>
+    </div>
+    <div id="lov-msg">MEMUAT...</div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="tco" aria-live="polite" aria-atomic="false" role="region" aria-label="Notifikasi"></div>
+
+<!-- PAGE TRANSITION -->
+<div id="page-transition"></div>
+
+<!-- LOGIN PAGE -->
+<div id="lp" role="main">
+  <div class="lp-grid-bg" aria-hidden="true"></div>
+  <div class="lp-glow lp-glow-tr" aria-hidden="true"></div>
+  <div class="lp-glow lp-glow-bl" aria-hidden="true"></div>
+  <div class="lp-noise" aria-hidden="true"></div>
+
+  <div class="lp-card" role="dialog" aria-labelledby="lp-title">
+    <div class="lp-brand" aria-label="Brand">
+      <div class="lp-brand-icon" aria-hidden="true">
+        <img src="assets/icon-full.png" alt="Logo SIMPATIH"
+             style="width:60px;height:60px;object-fit:contain;border-radius:14px"
+             onerror="this.outerHTML='<i class=\'fas fa-landmark\' style=\'font-size:1.25rem;color:rgba(255,255,255,.85)\'></i>'">
+      </div>
+      <div class="lp-brand-text">
+        <h1 id="lp-title" class="lp-title">SIMPATIH</h1>
+        <p class="lp-subtitle">
+          Sistem Informasi Manajemen Pemerintahan<br>
+          <strong>Kelurahan Kepatihan</strong> &nbsp;·&nbsp; Ponorogo
+        </p>
+      </div>
+    </div>
+
+    <div class="lp-divider" aria-hidden="true"></div>
+
+    <div class="lp-form" role="form" aria-label="Form Login">
+      <div id="lerr" class="lp-err" role="alert" aria-live="assertive">
+        <i class="fas fa-circle-exclamation" aria-hidden="true"></i>
+        <span id="lerrmsg">Terjadi kesalahan.</span>
+      </div>
+
+      <div class="fgrp">
+        <label class="flbl" for="l-user">
+          <i class="fas fa-user" aria-hidden="true"></i> Username
+        </label>
+        <div class="lp-inp-wrap">
+          <input class="fctl" id="l-user" type="text" placeholder="Masukkan username"
+                 autocomplete="username" spellcheck="false" autofocus
+                 onkeydown="if(event.key==='Enter')document.getElementById('l-pass').focus()">
+        </div>
+      </div>
+
+      <div class="fgrp">
+        <label class="flbl" for="l-pass">
+          <i class="fas fa-lock" aria-hidden="true"></i> Password
+        </label>
+        <div class="lp-inp-wrap" style="position:relative">
+          <input class="fctl" id="l-pass" type="password" placeholder="Masukkan password"
+                 autocomplete="current-password" style="padding-right:40px"
+                 onkeydown="if(event.key==='Enter')doLogin()">
+          <button class="lp-eye-btn" type="button" onclick="toggleEye()"
+                  aria-label="Tampilkan/sembunyikan password" tabindex="-1">
+            <i class="fas fa-eye" id="eye-ico" aria-hidden="true"></i>
+          </button>
+        </div>
+      </div>
+
+      <button id="l-btn" class="lp-login-btn" onclick="doLogin()" type="button">
+        <i class="fas fa-right-to-bracket" aria-hidden="true"></i>
+        <span>Masuk ke Sistem</span>
+      </button>
+    </div>
+
+    <div class="lp-footer">
+      SIMPATIH &nbsp;·&nbsp; Kelurahan Kepatihan
+    </div>
+  </div>
+</div>
+
+
+<!-- APLIKASI UTAMA -->
+<div id="app" role="application" aria-label="SIMPATIH Aplikasi Utama">
+
+  <!-- SIDEBAR -->
+  <nav id="sidebar" role="navigation" aria-label="Menu navigasi utama">
+    <div class="sb-inner">
+
+      <div class="sb-logo" style="
+        padding: 14px 10px 10px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        border-bottom: 1px solid rgba(255,255,255,.06);
+        margin-bottom: 2px;
+        flex-shrink: 0;
+      ">
+        <img src="assets/icon-full.png" alt="Logo SIMPATIH"
+             style="width:32px;height:32px;object-fit:contain;border-radius:7px;flex-shrink:0"
+             onerror="this.style.display='none'">
+        <div>
+          <div style="font-family:var(--serif);font-size:.9rem;font-weight:700;color:#fff;line-height:1.1">SIMPATIH</div>
+          <div style="font-size:.48rem;color:rgba(255,255,255,.3);letter-spacing:.05em;margin-top:2px">Sistem Informasi Manajemen Pemerintahan Kelurahan Kepatihan</div>
+        </div>
+      </div>
+
+      <div class="sb-nav" role="list">
+
+        <span class="sb-nav-label" role="separator">UTAMA</span>
+
+        <button class="nb on" id="nav-db" onclick="loadDashboard()" role="listitem" aria-current="page">
+          <i class="fas fa-gauge-high nb-ico" aria-hidden="true"></i>
+          <span>Dashboard</span>
+        </button>
+
+        <button class="nb" id="nav-bs" onclick="loadBuatSurat()" role="listitem">
+          <i class="fas fa-file-signature nb-ico" aria-hidden="true"></i>
+          <span>Buat Surat</span>
+        </button>
+
+        <button class="nb" id="nav-sm" onclick="loadSuratMasuk()" role="listitem">
+          <i class="fas fa-envelope-open-text nb-ico" aria-hidden="true"></i>
+          <span>Surat Masuk</span>
+          <span class="nb-badge" id="badge-perm" style="display:none" aria-label="permohonan menunggu">0</span>
+        </button>
+
+        <button class="nb" id="nav-sk" onclick="loadSuratKeluar()" role="listitem">
+          <i class="fas fa-paper-plane nb-ico" aria-hidden="true"></i>
+          <span>Surat Keluar</span>
+        </button>
+
+        <button class="nb" id="nav-kp" onclick="loadKependudukan()" role="listitem">
+          <i class="fas fa-id-card nb-ico" aria-hidden="true"></i>
+          <span>Kependudukan</span>
+        </button>
+
+        <span class="sb-nav-label" role="separator">WILAYAH &amp; KEGIATAN</span>
+
+        <button class="nb" id="nav-ag" onclick="loadAgenda()" role="listitem">
+          <i class="fas fa-calendar-days nb-ico" aria-hidden="true"></i>
+          <span>Agenda Kegiatan</span>
+        </button>
+
+        <button class="nb" id="nav-peta" onclick="loadPeta()" role="listitem">
+          <i class="fas fa-map-location-dot nb-ico" aria-hidden="true"></i>
+          <span>Peta Kepatihan</span>
+        </button>
+
+        <span class="sb-nav-label" role="separator">INFORMASI</span>
+
+        <button class="nb" id="nav-ar" onclick="loadArsip()" role="listitem">
+          <i class="fas fa-folder-open nb-ico" aria-hidden="true"></i>
+          <span>Arsip Dokumen</span>
+        </button>
+
+        <button class="nb" id="nav-lap" onclick="loadLaporan()" role="listitem">
+          <i class="fas fa-file-lines nb-ico" aria-hidden="true"></i>
+          <span>Laporan</span>
+        </button>
+
+        <div id="nav-set-section">
+          <span class="sb-nav-label" role="separator">SISTEM</span>
+          <button class="nb" id="nav-set" onclick="loadPengaturan()" role="listitem">
+            <i class="fas fa-gear nb-ico" aria-hidden="true"></i>
+            <span>Pengaturan</span>
+          </button>
+        </div>
+
+      </div><!-- /.sb-nav -->
+
+      <div class="sb-foot">
+        <button class="sb-logout-btn" onclick="doLogout()" aria-label="Keluar dari sistem">
+          <i class="fas fa-right-from-bracket" aria-hidden="true"></i>
+          <span>Keluar</span>
+        </button>
+        <p class="sb-version">SIMPATIH</p>
+      </div>
+
+    </div><!-- /.sb-inner -->
+  </nav><!-- /#sidebar -->
+
+
+  <!-- KOLOM KANAN -->
+  <div id="layout">
+
+    <div id="sb-overlay" onclick="sbClose()" aria-hidden="true" tabindex="-1"></div>
+
+    <header id="topbar" role="banner">
+
+      <button id="mbb" class="topbar-ham"
+              onclick="sbToggle()"
+              aria-label="Buka/Tutup Sidebar"
+              aria-expanded="false"
+              aria-controls="sidebar">
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </button>
+
+      <div class="topbar-brand"
+           onclick="loadDashboard()"
+           role="link" tabindex="0"
+           title="Kembali ke Dashboard"
+           onkeydown="if(event.key==='Enter')loadDashboard()">
+        <div class="topbar-brand-icon" aria-hidden="true">
+          <img src="assets/icon-full.png" alt="Logo"
+               style="width:22px;height:22px;object-fit:contain;display:block"
+               onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\'fas fa-landmark\' style=\'font-size:.78rem;color:rgba(255,255,255,.9)\'></i>'">
+        </div>
+        <div class="topbar-brand-text">
+          <span class="topbar-app-name">SIMPATIH</span>
+          <span class="topbar-app-sub">Kel. Kepatihan</span>
+        </div>
+      </div>
+
+      <div class="topbar-page-info" role="heading" aria-level="2">
+        <span id="pgtl" class="topbar-page-title">Dashboard</span>
+        <span id="pgsb" class="topbar-page-sub"></span>
+      </div>
+
+      <div class="topbar-right">
+
+        <time id="tb-clock" class="topbar-clock" aria-live="off" aria-label="Waktu sekarang"></time>
+
+        <button id="refresh-btn" class="topbar-icon-btn"
+                onclick="doRefresh()" title="Refresh halaman" aria-label="Refresh">
+          <i class="fas fa-rotate-right" aria-hidden="true"></i>
+        </button>
+
+        <div id="tb-user" class="topbar-user" style="display:none"
+             role="complementary" aria-label="Info pengguna">
+          <div class="topbar-avatar" aria-hidden="true">
+            <span id="tb-av-sm">?</span>
+          </div>
+          <div class="topbar-user-meta">
+            <span id="tb-un" class="topbar-username"></span>
+            <span id="tb-badge" class="topbar-badge"></span>
+          </div>
+          <button class="topbar-icon-btn topbar-logout-btn"
+                  onclick="doLogout()"
+                  title="Keluar dari sistem" aria-label="Keluar">
+            <i class="fas fa-right-from-bracket" aria-hidden="true"></i>
+          </button>
+        </div>
+
+      </div><!-- /.topbar-right -->
+    </header><!-- /#topbar -->
+
+    <main id="main" role="main" aria-label="Konten halaman">
+
+      <div id="page-skeleton" class="page-skeleton" style="display:none" aria-hidden="true">
+        <div class="skel-header"></div>
+        <div class="skel-cards">
+          <div class="skel-card"></div>
+          <div class="skel-card"></div>
+          <div class="skel-card"></div>
+          <div class="skel-card"></div>
+          <div class="skel-card"></div>
+        </div>
+        <div class="skel-body">
+          <div class="skel-panel">
+            <div class="skel-line w-40"></div>
+            <div class="skel-line w-70"></div>
+            <div class="skel-line w-55"></div>
+            <div class="skel-line w-80"></div>
+            <div class="skel-line w-45"></div>
+          </div>
+          <div class="skel-panel">
+            <div class="skel-line w-60"></div>
+            <div class="skel-line w-75"></div>
+            <div class="skel-line w-50"></div>
+            <div class="skel-line w-65"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="ct" class="ct-wrap"></div>
+
+    </main><!-- /#main -->
+
+  </div><!-- /#layout -->
+
+  <!-- BOTTOM NAVIGATION (Mobile) -->
+  <nav id="bottom-nav" role="navigation" aria-label="Navigasi bawah mobile">
+    <button class="bni on" id="bni-db" onclick="loadDashboard()" aria-label="Dashboard" aria-current="page">
+      <i class="fas fa-gauge-high" aria-hidden="true"></i>
+      <span>Home</span>
+    </button>
+    <button class="bni" id="bni-bs" onclick="loadBuatSurat()" aria-label="Buat Surat">
+      <i class="fas fa-file-signature" aria-hidden="true"></i>
+      <span>Buat Surat</span>
+    </button>
+    <button class="bni" id="bni-sm" onclick="loadSuratMasuk()" aria-label="Surat Masuk">
+      <i class="fas fa-envelope-open-text" aria-hidden="true"></i>
+      <span>Surat</span>
+    </button>
+    <button class="bni" id="bni-kp" onclick="loadKependudukan()" aria-label="Kependudukan">
+      <i class="fas fa-id-card" aria-hidden="true"></i>
+      <span>Penduduk</span>
+    </button>
+    <button class="bni" id="bni-ag" onclick="loadAgenda()" aria-label="Agenda">
+      <i class="fas fa-calendar-days" aria-hidden="true"></i>
+      <span>Agenda</span>
+    </button>
+  </nav>
+
+</div><!-- /#app -->
+
+
+<!-- MODALS STATIS -->
+
+<!-- Modal: Preview File/Dokumen -->
+<div class="mov" id="m-fileprev" role="dialog" aria-labelledby="m-fileprev-title" aria-modal="true">
+  <div class="mbox mbox-xl">
+    <div class="mhd">
+      <h5 id="m-fileprev-title">
+        <i class="fas fa-file-search" aria-hidden="true" style="color:var(--teal)"></i>
+        Preview Dokumen
+      </h5>
+      <div style="display:flex;gap:6px;align-items:center;margin-left:auto">
+        <a id="fileprev-dl-link" href="#" target="_blank" rel="noopener noreferrer"
+           class="be" title="Download / Buka di tab baru" aria-label="Download dokumen">
+          <i class="fas fa-download" aria-hidden="true"></i>
+        </a>
+        <button class="bx" onclick="cm('m-fileprev')" aria-label="Tutup preview">&times;</button>
+      </div>
+    </div>
+    <div class="mbd fileprev-body" style="padding:0;min-height:300px">
+      <iframe id="fileprev-frame" title="Preview dokumen"
+              style="width:100%;height:75vh;min-height:400px;border:none;display:none;border-radius:0 0 12px 12px"
+              loading="lazy"></iframe>
+      <img id="fileprev-img" alt="Preview gambar dokumen"
+           style="max-width:100%;max-height:75vh;object-fit:contain;display:none;border-radius:0 0 12px 12px">
+      <div id="fileprev-fallback"
+           style="display:none;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:48px;color:var(--muted);min-height:200px">
+        <i class="fas fa-file-circle-question" style="font-size:2.5rem;opacity:.3" aria-hidden="true"></i>
+        <p style="font-size:.72rem;text-align:center">Format ini tidak bisa di-preview langsung di browser.</p>
+        <a id="fileprev-ext-link" href="#" target="_blank" rel="noopener noreferrer" class="bp bp-teal">
+          <i class="fas fa-external-link-alt" aria-hidden="true"></i> Buka di Tab Baru
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Edit Layer Peta -->
+<div class="mov" id="mlayer" role="dialog" aria-labelledby="mlayer-title" aria-modal="true">
+  <div class="mbox" style="max-width:900px;padding:0;overflow:hidden;display:grid;grid-template-columns:1fr 1fr;gap:0">
+    <div style="border-right:1px solid var(--border);display:flex;flex-direction:column;max-height:82vh">
+      <div class="mhd" style="flex-shrink:0">
+        <h5 id="mlayer-title">
+          <i class="fas fa-layer-group" aria-hidden="true" style="color:var(--teal)"></i>
+          Lokasi &amp; Layer
+        </h5>
+        <button class="bp" style="font-size:.62rem" onclick="openLayerForm(null)">
+          <i class="fas fa-plus" aria-hidden="true"></i> Tambah Lokasi
+        </button>
+      </div>
+      <div id="layer-list-body" style="flex:1;overflow-y:auto;padding:10px 12px">
+        <div class="empty">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Memuat...</p>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;max-height:82vh">
+      <div class="mhd" style="flex-shrink:0;justify-content:flex-end">
+        <button class="bg2" onclick="cm('mlayer');refreshLeaflet()" style="font-size:.62rem">
+          <i class="fas fa-check" aria-hidden="true"></i> Selesai
+        </button>
+        <button class="bx" onclick="cm('mlayer')" aria-label="Tutup">&times;</button>
+      </div>
+      <div id="layer-form-wrap" style="flex:1;overflow-y:auto;padding:10px 14px">
+        <div class="empty" style="padding:40px 10px">
+          <i class="fas fa-hand-pointer"
+             style="font-size:1.5rem;opacity:.14;display:block;margin-bottom:8px"></i>
+          <p style="font-size:.72rem">
+            Pilih lokasi di kiri untuk diedit,<br>
+            atau klik <strong>Tambah Lokasi</strong>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Konfirmasi Hapus -->
+<div class="mov" id="m-hps" role="alertdialog" aria-labelledby="m-hps-title" aria-modal="true">
+  <div class="mbox mbox-sm">
+    <div class="mhd">
+      <h5 id="m-hps-title">
+        <i class="fas fa-triangle-exclamation" aria-hidden="true" style="color:var(--red2)"></i>
+        Konfirmasi Hapus
+      </h5>
+      <button class="bx" onclick="cm('m-hps')" aria-label="Tutup konfirmasi">&times;</button>
+    </div>
+    <div class="mbd">
+      <p id="hps-msg" style="font-size:.77rem;color:var(--mid);line-height:1.75">
+        Apakah Anda yakin ingin menghapus data ini? Tindakan ini tidak dapat dibatalkan.
+      </p>
+    </div>
+    <div class="mft">
+      <button class="bg2" onclick="cm('m-hps')">
+        <i class="fas fa-xmark" aria-hidden="true"></i> Batal
+      </button>
+      <button class="bd" onclick="doHapus()">
+        <i class="fas fa-trash" aria-hidden="true"></i> Ya, Hapus
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Ganti Password -->
+<div class="mov" id="m-pwd" role="dialog" aria-labelledby="m-pwd-title" aria-modal="true">
+  <div class="mbox mbox-sm">
+    <div class="mhd">
+      <h5 id="m-pwd-title">
+        <i class="fas fa-key" aria-hidden="true" style="color:var(--gold)"></i>
+        Ganti Password
+      </h5>
+      <button class="bx" onclick="cm('m-pwd')" aria-label="Tutup">&times;</button>
+    </div>
+    <div class="mbd">
+      <div class="fgrp">
+        <label class="flbl" for="pwd-lama">Password Lama <span class="req" aria-label="wajib">*</span></label>
+        <input class="fctl" id="pwd-lama" type="password"
+               placeholder="Password saat ini" autocomplete="current-password">
+      </div>
+      <div class="fgrp">
+        <label class="flbl" for="pwd-baru">Password Baru <span class="req" aria-label="wajib">*</span></label>
+        <input class="fctl" id="pwd-baru" type="password"
+               placeholder="Minimal 6 karakter" autocomplete="new-password">
+      </div>
+      <div class="fgrp">
+        <label class="flbl" for="pwd-konfirm">Konfirmasi Password Baru <span class="req" aria-label="wajib">*</span></label>
+        <input class="fctl" id="pwd-konfirm" type="password"
+               placeholder="Ulangi password baru" autocomplete="new-password"
+               onkeydown="if(event.key==='Enter')submitGantiPwd()">
+      </div>
+    </div>
+    <div class="mft">
+      <button class="bg2" onclick="cm('m-pwd')">Batal</button>
+      <button class="bgold" onclick="submitGantiPwd()">
+        <i class="fas fa-key" aria-hidden="true"></i> Simpan
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Preview Cetak Surat / Laporan -->
+<div class="mov" id="m-cetak" role="dialog" aria-labelledby="m-cetak-title" aria-modal="true">
+  <div class="mbox mbox-xl">
+    <div class="mhd">
+      <h5 id="m-cetak-title">
+        <i class="fas fa-print" aria-hidden="true" style="color:var(--teal)"></i>
+        Preview Cetak
+      </h5>
+      <div style="display:flex;gap:6px;align-items:center;margin-left:auto;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:5px">
+          <label for="cetak-kertas"
+                 style="font-size:.58rem;font-weight:700;color:var(--muted);text-transform:uppercase;white-space:nowrap">
+            <i class="fas fa-file-alt" aria-hidden="true"></i> Kertas
+          </label>
+          <select id="cetak-kertas"
+                  class="fctl"
+                  style="font-size:.68rem;padding:4px 8px;height:auto;width:115px;flex:0 0 auto"
+                  onchange="ubahUkuranKertas(this.value)"
+                  aria-label="Pilih ukuran kertas">
+            <option value="a4"    selected>A4  (210×297)</option>
+            <option value="f4"          >F4  (210×330)</option>
+            <option value="legal"       >Legal (216×356)</option>
+            <option value="letter"      >Letter (216×279)</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px">
+          <label for="cetak-orientasi"
+                 style="font-size:.58rem;font-weight:700;color:var(--muted);text-transform:uppercase;white-space:nowrap">
+            <i class="fas fa-arrows-alt" aria-hidden="true"></i> Orientasi
+          </label>
+          <select id="cetak-orientasi"
+                  class="fctl"
+                  style="font-size:.68rem;padding:4px 8px;height:auto;width:100px;flex:0 0 auto"
+                  onchange="ubahOrientasi(this.value)"
+                  aria-label="Pilih orientasi cetak">
+            <option value="portrait"   selected>&#x25AF;&#xFE0E; Portrait</option>
+            <option value="landscape"          >&#x25AD;&#xFE0E; Landscape</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:3px;background:var(--bg2);border-radius:6px;padding:2px 4px">
+          <button class="bg2" onclick="cetakZoom(-10)" title="Perkecil"
+                  style="padding:3px 7px;font-size:.75rem;line-height:1">&#x2212;</button>
+          <span id="cetak-zoom-lbl" style="font-size:.62rem;color:var(--muted);min-width:34px;text-align:center">100%</span>
+          <button class="bg2" onclick="cetakZoom(+10)" title="Perbesar"
+                  style="padding:3px 7px;font-size:.75rem;line-height:1">&#x2B;</button>
+          <button class="bg2" onclick="cetakZoom(0)" title="Reset zoom"
+                  style="padding:3px 7px;font-size:.62rem;line-height:1">&#x21BA;</button>
+        </div>
+        <button class="bp bp-teal" onclick="doPrint('surat-frame')">
+          <i class="fas fa-print" aria-hidden="true"></i> Cetak
+        </button>
+        <button class="bx" onclick="cm('m-cetak')" aria-label="Tutup preview cetak">&times;</button>
+      </div>
+    </div>
+    <div class="mbd" style="padding:0">
+      <iframe id="surat-frame" title="Preview cetak dokumen"
+              style="width:100%;height:80vh;min-height:520px;border:none;background:#fff;border-radius:0 0 12px 12px"
+              sandbox="allow-same-origin allow-popups allow-scripts allow-modals"></iframe>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     SCRIPTS — LOAD ORDER
+══════════════════════════════════════════ -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin="anonymous"></script>
+
+<script src="js/api.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/surat.js"></script>
+<script src="js/penduduk.js"></script>
+<script src="js/peta.js"></script>
+<script src="js/app.js"></script>
+
+<!-- Verifikasi Chart.js + fallback -->
+<script>
+(function () {
+  if (typeof Chart === 'undefined') {
+    console.error('[SIMPATIH] Chart.js gagal. Mencoba CDN fallback...');
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js';
+    s.onload = function () { console.info('[SIMPATIH] Chart.js fallback OK.'); };
+    document.head.appendChild(s);
+  } else {
+    console.info('[SIMPATIH] Chart.js v' + Chart.version + ' siap.');
+  }
+})();
+</script>
+
+<!-- ══════════════════════════════════════════
+     BACKGROUND DATA PREFETCH (Cache GAS)
+     ──────────────────────────────────────────
+     Konsep: hanya pre-fetch RAW DATA dari GAS
+     Spreadsheet di background, simpan ke
+     window._gc (global cache).
+
+     Fungsi loadXxx() di masing-masing modul
+     dicek dulu: kalau _gc sudah punya data,
+     langsung pakai — tidak perlu gasCall() lagi.
+
+     Cara integrasi di loadXxx() (contoh):
+
+       async function loadSuratMasuk() {
+         ...
+         var cached = window._gcGet('suratMasuk');
+         if (cached) {
+           // pakai data dari cache
+           _suratData = cached.suratRes.data || [];
+           _permData  = cached.permRes.data  || [];
+           _renderSuratMasukPage();
+           window._gcRefresh('suratMasuk'); // update di bg
+           return;
+         }
+         // tidak ada cache → fetch normal
+         ...
+       }
+
+     Setelah add/edit/hapus, hapus cache:
+       window._gcDel('suratMasuk');
+
+     Setelah logout:
+       window._gcClear();
+     ══════════════════════════════════════════ -->
+<script>
+(function () {
+  'use strict';
+
+  /* ── Config ── */
+  var TTL_MS   = 5 * 60 * 1000;  /* cache segar selama 5 menit */
+  var DELAY_MS = 3000;            /* mulai prefetch 3 detik setelah _prefetchAll() dipanggil */
+  var GAP_MS   = 1200;            /* jeda antar request agar GAS tidak kelebihan beban */
+
+  /* ── Penyimpanan cache ── */
+  window._gc = {};
+
+  /** Ambil data dari cache. Null jika tidak ada / expired. */
+  window._gcGet = function (key) {
+    var c = window._gc[key];
+    if (!c) return null;
+    if (Date.now() - c.ts > TTL_MS) { delete window._gc[key]; return null; }
+    return c.data;
+  };
+
+  /** Simpan data ke cache. */
+  window._gcSet = function (key, data) {
+    window._gc[key] = { data: data, ts: Date.now() };
+  };
+
+  /** Hapus satu cache key (panggil ini setelah submit / hapus data). */
+  window._gcDel = function (key) {
+    delete window._gc[key];
+  };
+
+  /** Hapus semua cache (panggil di doLogout). */
+  window._gcClear = function () {
+    window._gc = {};
+  };
+
+  /* ── Definisi job prefetch ──
+     Urutan = prioritas. Peta TIDAK di-prefetch.
+  ── */
+  function getJobs() {
+    return [
+      {
+        key: 'dashboard',
+        run: function () {
+          return gasCall('getDashboardData')
+                 .then(function (d) { return { d: d }; });
+        }
+      },
+      {
+        key: 'suratMasuk',
+        run: function () {
+          return Promise.all([
+            gasCall('getAllSurat',      { tipe: 'masuk' }),
+            gasCall('getAllPermohonan', {})
+          ]).then(function (r) { return { suratRes: r[0], permRes: r[1] }; });
+        }
+      },
+      {
+        key: 'suratKeluar',
+        run: function () {
+          return gasCall('getAllSurat', { tipe: 'keluar' })
+                 .then(function (r) { return { suratRes: r }; });
+        }
+      },
+      {
+        key: 'penduduk',
+        run: function () {
+          return gasCall('getAllPenduduk', {})
+                 .then(function (r) { return { res: r }; });
+        }
+      },
+      {
+        key: 'agenda',
+        run: function () {
+          return gasCall('getAllAgenda', {})
+                 .then(function (r) { return { res: r }; });
+        }
+      },
+      {
+        key: 'arsip',
+        run: function () {
+          return gasCall('getAllArsip', {})
+                 .then(function (r) { return { res: r }; });
+        }
+      },
+      {
+        key: 'laporan',
+        run: function () {
+          var now = new Date();
+          var bulan = now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0');
+          return gasCall('getLaporanData', { bulan: bulan })
+                 .then(function (res) { return { res: res, bulan: bulan }; });
+        }
+      },
+      {
+        key: 'pengaturan',
+        run: function () {
+          /* Hanya prefetch untuk admin */
+          if (typeof SES === 'undefined' || !SES || SES.role !== 'admin') {
+            return Promise.resolve(null);
+          }
+          return gasCall('getAllUsers')
+                 .then(function (res) { return { res: res }; });
+        }
+      }
+    ];
+  }
+
+  /* ── Waterfall: jalankan job satu per satu ── */
+  function waterfall(jobs, idx) {
+    if (idx >= jobs.length) {
+      console.info('[GC] Prefetch selesai.');
+      return;
+    }
+    /* Berhenti jika user sudah logout */
+    if (typeof SES === 'undefined' || !SES || !SES.username) return;
+
+    var job = jobs[idx];
+
+    /* Lewati kalau cache masih segar */
+    if (window._gcGet(job.key)) {
+      waterfall(jobs, idx + 1);
+      return;
+    }
+
+    console.info('[GC] Fetching:', job.key);
+    job.run()
+      .then(function (data) {
+        window._gcSet(job.key, data);
+        console.info('[GC] Cached ✓', job.key);
+      })
+      .catch(function (e) {
+        console.warn('[GC] Gagal prefetch', job.key, e);
+      })
+      .finally(function () {
+        setTimeout(function () { waterfall(jobs, idx + 1); }, GAP_MS);
+      });
+  }
+
+  /**
+   * Mulai prefetch semua data di background.
+   * Panggil ini dari doLogin() atau session restore di ui.js:
+   *   window._prefetchAll();
+   */
+  window._prefetchAll = function () {
+    setTimeout(function () {
+      if (typeof gasCall !== 'function') {
+        /* gasCall belum siap, coba lagi sebentar */
+        setTimeout(window._prefetchAll, 800);
+        return;
+      }
+      console.info('[GC] Memulai background prefetch...');
+      waterfall(getJobs(), 0);
+    }, DELAY_MS);
+  };
+
+  /**
+   * Refresh satu key di background (non-blocking).
+   * Berguna setelah render dari cache untuk update data terbaru.
+   */
+  window._gcRefresh = function (key) {
+    var jobs = getJobs();
+    for (var i = 0; i < jobs.length; i++) {
+      if (jobs[i].key !== key) continue;
+      (function (job) {
+        job.run()
+          .then(function (d) { window._gcSet(job.key, d); })
+          .catch(function () {});
+      })(jobs[i]);
+      break;
+    }
+  };
+
+})();
+</script>
+
+</body>
+</html>
